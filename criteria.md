@@ -43,7 +43,8 @@ Given a query that matches no listings, the agent stops before calling
 ---
 
 ## 3. Something about state
-
+Given a query that matches another listing, the agent compares the 2 during
+`suggest_outfit` and skips that item — 4 of 5 tries.
 <!-- YOU WRITE THIS ONE.
 
      How would you know that the item your search found is the same item the
@@ -63,7 +64,7 @@ Given a query that matches no listings, the agent stops before calling
 ---
 
 ## 4. Something about the fit card
-
+Given an item or an outfit that is is similar to others, the agent will ensure to restrict dupicates while running `create_fit_card`  — 3 of 5 tries.
 <!-- YOU WRITE THIS ONE.
 
      The fit card calls a model, so the same input can produce different words
@@ -84,7 +85,8 @@ Given a query that matches no listings, the agent stops before calling
 ---
 
 ## 5. Your choice
-
+Given a query that matches all listings, the agent stops before calling
+`suggest_outfit` and returns a message naming what to change — 2 of 5 tries.
 <!-- YOU WRITE THIS ONE TOO.
 
      Pick something you actually care about getting right. Speed, the empty

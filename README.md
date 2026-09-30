@@ -59,24 +59,25 @@
 
 ### `search_listings`
 
-- **What it does:**
+- **What it does:** searches the listings for an item that matches the given desciption
 - **Inputs:** <!-- name and type each: `max_price` (float), not "a price" -->
-- **Returns:**
-- **When it has nothing:**
+description (string), size(string), max_price(float),
+- **Returns:** A list of dictionaries sorted with the best match first
+- **When it has nothing:** returns nothing if there are no matches
 
 ### `suggest_outfit`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** returns one or two outfit sugestions based on a given item
+- **Inputs:** new_item (dict), wardrobe (dict)
+- **Returns:** a string with a new outfit sugestion
+- **When it has nothing:** it will ask for ideas
 
 ### `create_fit_card`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** writes a probable caption a user would post for a given item
+- **Inputs:** outfit (string), new_item(dict)
+- **Returns:** a sting with the caption, 2-4 sentences
+- **When it has nothing:** a descriptive message explaining that
 
 ---
 
@@ -93,13 +94,13 @@
      The grader checks your code against what you claim here, so the file and
      function have to be real. -->
 
-**Branch rule:**
+**Branch rule:** if create_fit_card returns a message, print an empty caption, otherwise re-run the method with a non-empty string
 
 **Where it lives:** `agent.py::run_agent`
 
-**How the query is parsed:** <!-- regex, string splitting, or asking the model — say which -->
+**How the query is parsed:** I use regex in `_parse_query()` to lowercase the query, pull out a price phrase like `under $30` or `up to 40`, pull out a size like `M` or `size XXS`, remove those matches from the text, and treat whatever is left as the description.
 
-**What moves through the session:** <!-- which fields, in what order -->
+**What moves through the session:** `new_session()` creates the session, then `session["parsed"]` stores the parsed description/size/max_price. Next `session["search_results"]` gets the list from `search_listings()`. If that list is empty, `session["error"]` is set and the run stops. Otherwise the first result goes into `session["selected_item"]`, then `session["outfit_suggestion"]`, and finally `session["fit_card"]`.
 
 ---
 
@@ -147,14 +148,14 @@ $ python -c "from tools import create_fit_card; ..."
 
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for: I used copilot to fill in the functions in tools.py, the prompt was based on what each function should do*
+- *What came back: code related to the functions sole purpose*
+- *What I changed: bugs then made*
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
+- *What I asked for:I use copilot to fill in the run_agent function in agent.py*
+- *What came back: a helper function to be used within agent.py*
 - *What I changed:*
 
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════

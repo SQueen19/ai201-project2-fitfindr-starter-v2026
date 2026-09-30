@@ -78,8 +78,78 @@ def search_listings(
     Test it from a terminal before you move on:
         python -c "from tools import search_listings; print(search_listings('graphic tee', max_price=30))"
     """
-    # TODO: replace this with your implementation
-    return []
+    def _normalize_token(token: str) -> str:
+        token = token.lower().strip()
+        aliases = {
+            "small": "s",
+            "medium": "m",
+            "large": "l",
+            "extra small": "xs",
+            "extra large": "xl",
+            "xx-large": "xxl",
+        }
+        return aliases.get(token, token)
+
+    def _size_matches(listing_size: str, wanted_size: str) -> bool:
+        listing_text = listing_size.lower().replace("/", " ").replace("(", " ").replace(")", " ")
+        wanted = _normalize_token(wanted_size)
+
+        if wanted in {"xxs", "xs", "s", "m", "l", "xl", "xxl"}:
+            tokens = {tok.strip(".,") for tok in listing_text.split()}
+            normalized_tokens = {_normalize_token(tok) for tok in tokens}
+            if wanted in normalized_tokens:
+                return True
+
+            size_groups = {
+                "s": {"s", "xs", "s/m", "one", "size", "oversized"},
+                "m": {"m", "s/m", "m/l", "one", "size", "oversized"},
+                "l": {"l", "m/l", "xl", "one", "size", "oversized"},
+                "xl": {"xl", "xxl", "one", "size", "oversized"},
+                "xxs": {"xxs", "xs", "one", "size"},
+                "xs": {"xs", "s", "one", "size"},
+                "xxl": {"xxl", "xl", "one", "size"},
+            }
+            return any(token in size_groups[wanted] for token in normalized_tokens)
+
+        if wanted.startswith("w") or wanted.startswith("us"):
+            return wanted.replace(" ", "") in listing_text.replace(" ", "")
+
+        return wanted in listing_text
+
+    def _score_listing(listing: dict, query_words: set[str]) -> int:
+        searchable_parts = [
+            listing.get("title", ""),
+            listing.get("description", ""),
+            " ".join(listing.get("style_tags", [])),
+            " ".join(listing.get("colors", [])),
+            listing.get("brand") or "",
+            listing.get("category", ""),
+        ]
+        text = " ".join(part.lower() for part in searchable_parts)
+        score = 0
+        for word in query_words:
+            if word in text:
+                score += 2 if word in listing.get("title", "").lower() else 1
+        return score
+
+    query_words = {word for word in description.lower().split() if word}
+    results = []
+
+    for listing in load_listings():
+        if max_price is not None and listing.get("price", 0) > max_price:
+            continue
+
+        if size is not None and not _size_matches(str(listing.get("size", "")), size):
+            continue
+
+        score = _score_listing(listing, query_words)
+        if score <= 0:
+            continue
+
+        results.append((score, listing))
+
+    results.sort(key=lambda pair: (-pair[0], pair[1].get("price", 0), pair[1].get("title", "")))
+    return [listing for _, listing in results[: config.SEARCH_RESULT_LIMIT]]
 
 
 # ── Tool 2: suggest_outfit ────────────────────────────────────────────────────
@@ -113,7 +183,11 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
         python -c "from tools import suggest_outfit; from utils.data_loader import get_example_wardrobe, load_listings; print(suggest_outfit(load_listings()[0], get_example_wardrobe()))"
     """
     # TODO: replace this with your implementation
-    return ""
+    if not wardrobe:
+        return "No wardrobe items available. Here are some general styling ideas for your new item."
+    s = generate(f"Suggest one or two outfits that include this item: {new_item}. The user has these items in their wardrobe: {wardrobe['items']}.")
+    return s if s.strip() else "No outfit suggestions available."
+    
 
 
 # ── Tool 3: create_fit_card ───────────────────────────────────────────────────
@@ -153,4 +227,6 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
         python -c "from tools import create_fit_card; from utils.data_loader import load_listings; print(create_fit_card('jeans and white sneakers', load_listings()[0]))"
     """
     # TODO: replace this with your implementation
-    return ""
+    if not outfit or not outfit.strip():
+        return "No outfit information available."
+    return generate(f"Write a two-to-four sentence caption for this outfit: {outfit}. The item is: {new_item}. Make it sound like a real post, mentioning the item, its price, and platform once each, and be specific about the vibe.")

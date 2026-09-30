@@ -13,6 +13,8 @@ Build and test your three tools in `tools.py` first. Then come here.
     python agent.py          runs both example paths below
 """
 
+import re
+
 import config
 import trace
 from tools import search_listings, suggest_outfit, create_fit_card
@@ -44,6 +46,31 @@ def new_session(query: str, wardrobe: dict) -> dict:
         "outfit_suggestion": None,   # what suggest_outfit returned
         "fit_card": None,            # what create_fit_card returned
         "error": None,               # set when the run ended early
+    }
+
+
+def _parse_query(query: str) -> dict:
+    """Pull description, size, and max_price out of a plain-language query."""
+    text = query.lower()
+
+    max_price = None
+    price_match = re.search(r"(?:under|below|max(?:imum)?|up to)\s*\$?\s*(\d+(?:\.\d+)?)", text)
+    if price_match:
+        max_price = float(price_match.group(1))
+        text = text[:price_match.start()] + text[price_match.end():]
+
+    size = None
+    size_match = re.search(r"\b(?:size\s*)?(xxs|xs|s|m|l|xl|xxl)\b", text)
+    if size_match:
+        size = size_match.group(1).upper()
+        text = text[:size_match.start()] + text[size_match.end():]
+
+    description = re.sub(r"\s+", " ", text).strip(" ,.-")
+
+    return {
+        "description": description,
+        "size": size,
+        "max_price": max_price,
     }
 
 
@@ -107,10 +134,42 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     """
     session = new_session(query, wardrobe)
 
-    # TODO: delete these two lines and build the loop.
-    session["error"] = "The planning loop isn't built yet — see the TODO in agent.py."
-    return session
+    count = 0
+    count += 1
+    trace.check_iterations(count)
 
+    session["parsed"] = _parse_query(query)
+
+    search_results = search_listings(
+        session["parsed"]["description"],
+        size=session["parsed"]["size"],
+        max_price=session["parsed"]["max_price"],
+    )
+    session["search_results"] = search_results
+
+    if not search_results:
+        session["error"] = (
+            "No matching listings found. Try a different description, a larger budget, "
+            "or leave off the size filter."
+        )
+        return session
+
+    session["selected_item"] = search_results[0]
+
+    try:
+        session["outfit_suggestion"] = suggest_outfit(
+            session["selected_item"],
+            wardrobe,
+        )
+        session["fit_card"] = create_fit_card(
+            session["outfit_suggestion"],
+            session["selected_item"],
+        )
+    except ModelUnavailable:
+        session["error"] = "The model is unavailable right now. Try again later."
+        return session
+
+    return session
 
 # ── running it directly ───────────────────────────────────────────────────────
 
