@@ -35,6 +35,27 @@ SCENARIOS = [
         "wardrobe": "empty",
         "criterion": None,
     },
+    {
+        # A scenario for criterion 3.
+        "name": "The selected item carries through to outfit suggestions",
+        "query": "retro sneakers size 9 under $100",
+        "wardrobe": "example",
+        "criterion": 3,
+    },
+    {
+        # A scenario for criterion 4.
+        "name": "The fit card stays specific without repeating itself",
+        "query": "dress size M under $60",
+        "wardrobe": "example",
+        "criterion": 4,
+    },
+    {
+        # A scenario for criterion 5.
+        "name": "Empty-search queries stop at the branch with a useful message",
+        "query": "fancy hat size L under $1",
+        "wardrobe": "example",
+        "criterion": 5,
+    }
     # TODO: add what your criteria 3, 4 and 5 need.
     #
     # Set "criterion" to the number in criteria.md that the scenario tests.

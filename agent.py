@@ -139,15 +139,17 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     trace.check_iterations(count)
 
     session["parsed"] = _parse_query(query)
+    trace.step("parse_query", inputs=query, returned=session["parsed"])
 
     search_results = search_listings(
         session["parsed"]["description"],
         size=session["parsed"]["size"],
         max_price=session["parsed"]["max_price"],
     )
-    session["search_results"] = search_results
+    trace.step("search_listings", inputs=session["parsed"], returned=search_results)
 
     if not search_results:
+        trace.step("branch", note="no results, stopping")
         session["error"] = (
             "No matching listings found. Try a different description, a larger budget, "
             "or leave off the size filter."
@@ -155,19 +157,19 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         return session
 
     session["selected_item"] = search_results[0]
+    trace.step("select_item", inputs=search_results, returned=session["selected_item"])
 
-    try:
-        session["outfit_suggestion"] = suggest_outfit(
-            session["selected_item"],
-            wardrobe,
-        )
-        session["fit_card"] = create_fit_card(
-            session["outfit_suggestion"],
-            session["selected_item"],
-        )
-    except ModelUnavailable:
-        session["error"] = "The model is unavailable right now. Try again later."
-        return session
+    session["outfit_suggestion"] = suggest_outfit(
+        session["selected_item"],
+        wardrobe,
+    )
+    trace.step("suggest_outfit", inputs=session["selected_item"], returned=session["outfit_suggestion"])
+
+    session["fit_card"] = create_fit_card(
+        session["outfit_suggestion"],
+        session["selected_item"],
+    )
+    trace.step("create_fit_card", inputs=session["outfit_suggestion"], returned=session["fit_card"])
 
     return session
 

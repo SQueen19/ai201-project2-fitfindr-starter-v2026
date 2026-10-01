@@ -42,7 +42,7 @@ Given a query that matches no listings, the agent stops before calling
 
 ---
 
-## 3. Something about state
+## 3. The selected item carries through to outfit suggestions
 Given a query that matches another listing, the agent compares the 2 during
 `suggest_outfit` and skips that item — 4 of 5 tries.
 <!-- YOU WRITE THIS ONE.
@@ -63,7 +63,7 @@ Given a query that matches another listing, the agent compares the 2 during
 
 ---
 
-## 4. Something about the fit card
+## 4. The fit card stays specific without repeating itself
 Given an item or an outfit that is is similar to others, the agent will ensure to restrict dupicates while running `create_fit_card`  — 3 of 5 tries.
 <!-- YOU WRITE THIS ONE.
 
@@ -84,7 +84,7 @@ Given an item or an outfit that is is similar to others, the agent will ensure t
 
 ---
 
-## 5. Your choice
+## 5. Empty-search queries stop at the branch with a useful message
 Given a query that matches all listings, the agent stops before calling
 `suggest_outfit` and returns a message naming what to change — 2 of 5 tries.
 <!-- YOU WRITE THIS ONE TOO.
